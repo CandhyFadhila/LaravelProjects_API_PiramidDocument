@@ -78,7 +78,7 @@ class DocumentController extends Controller
                 // ];
 
                 // Simpan file langsung ke folder publik (public/storage/file)
-                $file->move(public_path('storage/file'), $filename);
+                $file->move('storage/file', $filename);
 
                 $document = Document::create([
                     'id' => $fileId,
