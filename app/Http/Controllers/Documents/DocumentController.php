@@ -49,20 +49,42 @@ class DocumentController extends Controller
             $uploadedFiles = [];
 
             foreach ($request->file('files') as $file) {
+                // Ini untuk local aja
                 $filename = Str::random(25);
                 $mimeType = $file->getClientMimeType();
                 $size = $this->getFileSize($file);
                 $fileId = Str::uuid()->toString();
 
-                // Simpan file (tanpa ekstensi)
-                $filePath = "documents/{$filename}";
-                Storage::put("public/{$filePath}", file_get_contents($file));
+                // // Simpan file (tanpa ekstensi)
+                // $filePath = "documents/{$filename}";
+                // Storage::put("public/{$filePath}", file_get_contents($file));
+
+                // $document = Document::create([
+                //     'id' => $fileId,
+                //     'user_id' => auth()->id(),
+                //     'filename' => $filename,
+                //     'path' => $filePath,
+                //     'mime_type' => $mimeType,
+                //     'size' => $size,
+                // ]);
+
+                // // Simpan hasil upload ke array
+                // $uploadedFiles[] = [
+                //     'file_id' => $document->id,
+                //     'filename' => $document->filename,
+                //     'url' => Storage::url("public/{$filePath}"),
+                //     'mime_type' => $document->mime_type,
+                //     'size' => $this->formatFileSize($document->size),
+                // ];
+
+                // Simpan file langsung ke folder publik (public/storage/file)
+                $file->move(public_path('storage/file'), $filename);
 
                 $document = Document::create([
                     'id' => $fileId,
                     'user_id' => auth()->id(),
                     'filename' => $filename,
-                    'path' => $filePath,
+                    'path' => "file/{$filename}",
                     'mime_type' => $mimeType,
                     'size' => $size,
                 ]);
@@ -71,7 +93,7 @@ class DocumentController extends Controller
                 $uploadedFiles[] = [
                     'file_id' => $document->id,
                     'filename' => $document->filename,
-                    'url' => Storage::url("public/{$filePath}"),
+                    'url' => url("storage/file/{$filename}"),
                     'mime_type' => $document->mime_type,
                     'size' => $this->formatFileSize($document->size),
                 ];
@@ -103,12 +125,25 @@ class DocumentController extends Controller
             foreach ($request->file_id as $fileId) {
                 $document = Document::where('id', $fileId)->first();
 
-                if ($document && Storage::exists("public/{$document->path}")) {
-                    Storage::delete("public/{$document->path}");
-                    $document->delete();
-                    $deleted[] = $fileId;
-                } else {
-                    Log::warning("Dokumen tidak ditemukan atau tidak ada di storage: {$fileId}");
+                // Ini untuk local
+                // if ($document && Storage::exists("public/{$document->path}")) {
+                //     Storage::delete("public/{$document->path}");
+                //     $document->delete();
+                //     $deleted[] = $fileId;
+                // } else {
+                //     Log::warning("Dokumen tidak ditemukan atau tidak ada di storage: {$fileId}");
+                // }
+
+                if ($document) {
+                    $filePath = public_path("storage/{$document->path}");
+
+                    if (file_exists($filePath)) {
+                        unlink($filePath);
+                        $document->delete();
+                        $deleted[] = $fileId;
+                    } else {
+                        Log::warning("Dokumen tidak ditemukan atau tidak ada di storage: {$fileId}");
+                    }
                 }
             }
 
