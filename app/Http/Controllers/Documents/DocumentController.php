@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Documents;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Documents\CreateDocumentRequest;
 use App\Http\Requests\Documents\CreateMultipleDocumentsRequest;
 use App\Http\Requests\Documents\GetDocumentRequest;
 use App\Http\Resources\Templates\WithDataResource;
@@ -55,29 +54,6 @@ class DocumentController extends Controller
                 $size = $this->getFileSize($file);
                 $fileId = Str::uuid()->toString();
 
-                // // Simpan file (tanpa ekstensi)
-                // $filePath = "documents/{$filename}";
-                // Storage::put("public/{$filePath}", file_get_contents($file));
-
-                // $document = Document::create([
-                //     'id' => $fileId,
-                //     'user_id' => auth()->id(),
-                //     'filename' => $filename,
-                //     'path' => $filePath,
-                //     'mime_type' => $mimeType,
-                //     'size' => $size,
-                // ]);
-
-                // // Simpan hasil upload ke array
-                // $uploadedFiles[] = [
-                //     'file_id' => $document->id,
-                //     'filename' => $document->filename,
-                //     'url' => Storage::url("public/{$filePath}"),
-                //     'mime_type' => $document->mime_type,
-                //     'size' => $this->formatFileSize($document->size),
-                // ];
-
-                // Simpan file langsung ke folder publik (public/storage/file)
                 $file->move('storage/file', $filename);
 
                 $document = Document::create([
@@ -124,15 +100,6 @@ class DocumentController extends Controller
 
             foreach ($request->file_id as $fileId) {
                 $document = Document::where('id', $fileId)->first();
-
-                // Ini untuk local
-                // if ($document && Storage::exists("public/{$document->path}")) {
-                //     Storage::delete("public/{$document->path}");
-                //     $document->delete();
-                //     $deleted[] = $fileId;
-                // } else {
-                //     Log::warning("Dokumen tidak ditemukan atau tidak ada di storage: {$fileId}");
-                // }
 
                 if ($document) {
                     $filePath = public_path("storage/{$document->path}");
